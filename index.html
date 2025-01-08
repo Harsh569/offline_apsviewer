@@ -26,14 +26,18 @@
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar">
+    <nav class="navbar" style="display: flex; justify-content: space-between; align-items: center;">
         <h4 style="color: white">Offline Viewer</h4>
-        <div class="toggle-container">
+        <div class="toggle-container" style="display: flex; align-items: center; justify-content: space-between;">
             <label class="switch">
                 <input type="checkbox" id="modelToggle" onchange="handleToggle()">
                 <span class="slider round"></span>
             </label>
             </label>
+            <button
+                style="background-color: #2196F3; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-left: 10px;"
+                onclick="downloadSvfBundle()">Download
+                Svf Bundle</button>
         </div>
     </nav>
 
@@ -154,8 +158,28 @@
         var viewer = null;
         const LOCAL_MODEL_PATH = "./svf_bundle/svf_file/bundle/output.svf";
         const MODEL_URN = "dXJuOmFkc2sud2lwcHJvZDpmcy5maWxlOnZmLnNUaklES2I5Und1QzkxdUVyRzQ2d2c_dmVyc2lvbj0x"; // Replace with your actual URN
-        const ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiXSwiY2xpZW50X2lkIjoiVGY0dU9Zc3ZNVjN4RWpBOHVpUUg1QWlYV01YR290Nm4xWFp5cGhFTFRKV1BxNHN6IiwiaXNzIjoiaHR0cHM6Ly9kZXZlbG9wZXIuYXBpLmF1dG9kZXNrLmNvbSIsImF1ZCI6Imh0dHBzOi8vYXV0b2Rlc2suY29tIiwianRpIjoiVG5TOUtPc2xjUVcyOU5hS0RDc1NCa3pXTkJVT0V6d0JncVQyYjZmV1lKaXBDaHFUT0JkaTdWaDFJcGJCVlBIYyIsImV4cCI6MTczNjI0MzQyNX0.Pbwu3U_nmSa7qIrKzTaCHPPu8H1vk8rn_6mPl-fG-82BlxlU6SQ9yoh0Bu1Ps8n8bVwHDuHXV-p1B2hbIJ9d1B2PWGjvYnywV-Xuz6XlHLHsrig5AFCpHiEedjlDxe7XnTlFgzz8U6PS5HFIcC6WKbppXambPnrIM5I4h1emCfsxImbvONzExKoKC8T6Con0UbnTY60m4wjRgZ8H4GrFNmj-S3-w5MbwC8V9h3DMK7b92yAUkRlO4Px7hS6gzhsyrRXiWhuMoM2u4n2Bhd2mHqfu64kZ6XqA7u3EoXxMVKBuMUtgNVcgN2uTpkXLL9AHYwED-sgnhhGWk8epI0FU4Q"; // Replace with your Forge access token
+        const ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiXSwiY2xpZW50X2lkIjoiVGY0dU9Zc3ZNVjN4RWpBOHVpUUg1QWlYV01YR290Nm4xWFp5cGhFTFRKV1BxNHN6IiwiaXNzIjoiaHR0cHM6Ly9kZXZlbG9wZXIuYXBpLmF1dG9kZXNrLmNvbSIsImF1ZCI6Imh0dHBzOi8vYXV0b2Rlc2suY29tIiwianRpIjoia3hNbzZNZWJZNEM4cjZ6OGVGdlpBSHpxZzhBZ2lYSUluQ084Ukd0a3ZwR0NObWdQS2oybzMzSHY0MUJGTGlCNSIsImV4cCI6MTczNjMyODczNX0.HkwmAU8SynKjRmAWNJrNoIjno3wuGc_K7HUxiW6ZEl4ABWdcQ3trEItG13-_CC2tvldo6KKf0cL2uiDvwBN1jMHlXwjmsuaSJMg-npjON3JYUCzCIMKd9F9Y9GlpkOQmrnXIe8vU_vhP3pTjDVVj6YoLXPdhOh1RZhc-KbjefQGdG2ZzzwGq7p9EjvHfzScEFu4H9KT4terFC-a-CVsP_40cXv4Sr1OAHZZeqG78XmNBjRuKMfMTbLfz6JMiXSmbRY6_Adegw5D6tNK0epT6pSL8hJUJckv-nSLh6Y_Ycb3Zn5zxkPo8ryx8nFlnJalNgpNfzt22NcUhQXS7jXyhKQ"
 
+        function downloadSvfBundle() {
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+
+            const raw = JSON.stringify({
+                "model_urn": MODEL_URN
+            });
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: raw,
+                redirect: "follow"
+            };
+
+            fetch("http://127.0.0.1:5000/download_svf_bundle", requestOptions)
+                .then((response) => response.text())
+                .then((result) => console.log(result))
+                .catch((error) => console.error(error));
+        }
         function initViewer() {
             var myViewerDiv = document.getElementById("home");
             viewer = new Autodesk.Viewing.Private.GuiViewer3D(myViewerDiv);
