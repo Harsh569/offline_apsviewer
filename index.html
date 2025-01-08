@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Progressive Web App</title>
+    <meta name="msapplication-TileColor" content="#af0a1a" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="shortcut icon" href="img/fav-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="img/fav-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="img/fav-16.png" />
+    <link rel="apple-touch-icon" href="img/fav-57.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="img/fav-114.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="img/fav-72.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="img/fav-144.png" />
+    <link rel="manifest" href="pwa-manifest.json" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/style.min.css?v=v7.*"
+        type="text/css" />
+    <script language="JavaScript"
+        src="https://developer.api.autodesk.com/modelderivative/v2/viewers/viewer3D.min.js?v=v7.*"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <h4 style="color: white">Offline Viewer</h4>
+        <div class="toggle-container">
+            <label class="switch">
+                <input type="checkbox" id="modelToggle" onchange="handleToggle()">
+                <span class="slider round"></span>
+            </label>
+            </label>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="home"></div>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        .navbar {
+            background-color: #333;
+            padding: 1rem;
+        }
+
+        .navbar-menu {
+            list-style: none;
+            display: flex;
+            justify-content: space-around;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-menu li {
+            margin: 0;
+        }
+
+        .navbar-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .navbar-menu a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        section {
+            margin-top: 2rem;
+        }
+
+        section h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        section p {
+            margin: 0.5rem 0;
+        }
+    </style>
+    <script>
+        var viewer = null;
+        const LOCAL_MODEL_PATH = "./svf_bundle/svf_file/bundle/output.svf";
+        const MODEL_URN = "dXJuOmFkc2sud2lwcHJvZDpmcy5maWxlOnZmLnNUaklES2I5Und1QzkxdUVyRzQ2d2c_dmVyc2lvbj0x"; // Replace with your actual URN
+        const ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiXSwiY2xpZW50X2lkIjoiVGY0dU9Zc3ZNVjN4RWpBOHVpUUg1QWlYV01YR290Nm4xWFp5cGhFTFRKV1BxNHN6IiwiaXNzIjoiaHR0cHM6Ly9kZXZlbG9wZXIuYXBpLmF1dG9kZXNrLmNvbSIsImF1ZCI6Imh0dHBzOi8vYXV0b2Rlc2suY29tIiwianRpIjoiVG5TOUtPc2xjUVcyOU5hS0RDc1NCa3pXTkJVT0V6d0JncVQyYjZmV1lKaXBDaHFUT0JkaTdWaDFJcGJCVlBIYyIsImV4cCI6MTczNjI0MzQyNX0.Pbwu3U_nmSa7qIrKzTaCHPPu8H1vk8rn_6mPl-fG-82BlxlU6SQ9yoh0Bu1Ps8n8bVwHDuHXV-p1B2hbIJ9d1B2PWGjvYnywV-Xuz6XlHLHsrig5AFCpHiEedjlDxe7XnTlFgzz8U6PS5HFIcC6WKbppXambPnrIM5I4h1emCfsxImbvONzExKoKC8T6Con0UbnTY60m4wjRgZ8H4GrFNmj-S3-w5MbwC8V9h3DMK7b92yAUkRlO4Px7hS6gzhsyrRXiWhuMoM2u4n2Bhd2mHqfu64kZ6XqA7u3EoXxMVKBuMUtgNVcgN2uTpkXLL9AHYwED-sgnhhGWk8epI0FU4Q"; // Replace with your Forge access token
+
+        function initViewer() {
+            var myViewerDiv = document.getElementById("home");
+            viewer = new Autodesk.Viewing.Private.GuiViewer3D(myViewerDiv);
+            loadLocalModel();
+        }
+
+        function loadLocalModel() {
+            var options = {
+                env: "Local",
+                document: LOCAL_MODEL_PATH
+            };
+
+            Autodesk.Viewing.Initializer(options, function () {
+                viewer.start(options.document, options);
+            });
+        }
+
+        function loadUrnModel() {
+            var options = {
+                env: 'AutodeskProduction',
+                accessToken: ACCESS_TOKEN
+            };
+
+            Autodesk.Viewing.Initializer(options, function () {
+                var urnDoc = 'urn:' + MODEL_URN;
+
+                Autodesk.Viewing.Document.load(urnDoc,
+                    // onLoadSuccess
+                    function (doc) {
+                        var viewables = doc.getRoot().search({ 'type': 'geometry' });
+                        if (viewables && viewables.length > 0) {
+                            viewer.loadDocumentNode(doc, viewables[0], {
+                                globalOffset: { x: 0, y: 0, z: 0 }
+                            }).then(function (result) {
+                                console.log('Model loaded successfully');
+                            }).catch(function (err) {
+                                console.error('Error loading model:', err);
+                            });
+                        } else {
+                            console.error('No viewable geometry found in document');
+                        }
+                    },
+                    // onLoadError
+                    function (errorCode, errorMsg) {
+                        console.error('Error loading document:', errorCode, errorMsg);
+                    },
+
+                );
+            });
+        }
+
+        function handleToggle() {
+            const toggle = document.getElementById('modelToggle');
+            toggle.disabled = true;
+
+            try {
+                if (viewer) {
+                    // Properly clean up the existing viewer
+                    viewer.tearDown();
+                    viewer.finish();
+
+                    // Create new viewer instance
+                    var myViewerDiv = document.getElementById("home");
+                    viewer = new Autodesk.Viewing.Private.GuiViewer3D(myViewerDiv, {
+                        extensions: ['Autodesk.DocumentBrowser']
+                    });
+
+                    // Initialize the viewer before loading model
+                    viewer.start();
+
+                    if (toggle.checked) {
+                        loadUrnModel();
+                    } else {
+                        loadLocalModel();
+                    }
+                }
+            } catch (error) {
+                console.error('Error switching model:', error);
+            } finally {
+                toggle.disabled = false;
+            }
+        }
+
+        // Initialize viewer when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            Autodesk.Viewing.Initializer({ env: 'Local' }, function () {
+                initViewer();
+            });
+        });
+    </script>
+</body>
+</body>
+
+</html>
